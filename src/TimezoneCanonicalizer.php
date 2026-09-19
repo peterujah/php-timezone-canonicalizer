@@ -22,6 +22,16 @@ use InvalidArgumentException;
 final class TimezoneCanonicalizer
 {
     /**
+     * Timezone snapshot version.
+     * 
+     * @see timezone_version_get()
+     * @see /data/aliases.php
+     * 
+     * @var string VERSION
+     */
+    public const VERSION = '2022.7';
+
+    /**
      * Active alias registry: the default aliases plus any runtime additions
      * and overrides, minus any runtime removals.
      *
@@ -68,7 +78,6 @@ final class TimezoneCanonicalizer
      * @param string $timezone The canonical IANA timezone identifier.
      *
      * @return void
-     *
      * @throws InvalidArgumentException If the canonical timezone is invalid.
      */
     public static function add(string $alias, string $timezone): void
