@@ -3,6 +3,7 @@
  * Resolve backward-compatible IANA timezone aliases to canonical timezone identifiers.
  * 
  * @author Ujah Chigozie Peter
+ * @version 022.7
  */
 
 return [
