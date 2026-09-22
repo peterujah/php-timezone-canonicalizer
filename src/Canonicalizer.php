@@ -10,6 +10,7 @@ namespace Peterujah\Timezone;
 
 use Exception;
 use DateTimeZone;
+use RuntimeException;
 use InvalidArgumentException;
 
 /**
@@ -151,6 +152,71 @@ final class Canonicalizer
     }
 
     /**
+     * Load timezone aliases from an IANA `backward` file.
+     *
+     * @param string $file The path to the IANA `backward` timezone file.
+     *
+     * @return int The number of aliases loaded.
+     * @throws RuntimeException If the timezone file cannot be read.
+     *
+     * @example - Load IANA backward aliases:
+     * ```php
+     * $count = Canonicalizer::load('/path/to/backward');
+     * 
+     * echo Canonicalizer::resolve('Asia/Calcutta');
+     * ```
+     */
+    public static function load(string $file): int
+    {
+        $lines = false;
+        
+        if(str_ends_with($file, '.php')){
+            $aliases = require $file;
+
+            if(is_array($aliases)){
+                self::$ALIASES = array_merge(
+                    self::$ALIASES,
+                    $aliases
+                );
+
+                return count($aliases);
+            }
+        }else{
+            $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        }
+
+        if ($lines === false) {
+            throw new RuntimeException(sprintf(
+                'Unable to read timezone alias file: %s',
+                $file
+            ));
+        }
+
+        $count = 0;
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+
+            if ($line === '' || $line[0] === '#') {
+                continue;
+            }
+
+            $parts = preg_split('/\s+/', $line);
+
+            if (count($parts) < 3 || $parts[0] !== 'Link') {
+                continue;
+            }
+
+            [, $timezone, $alias] = $parts;
+
+            self::add($alias, $timezone);
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
      * Determine whether a timezone identifier is a registered alias.
      *
      * This is a plain registry lookup: the identifier is not validated, so
@@ -171,7 +237,6 @@ final class Canonicalizer
      * @param string $timezone The timezone identifier.
      *
      * @return void
-     *
      * @throws InvalidArgumentException If the timezone is invalid.
      */
     private static function assert(string $timezone): void
