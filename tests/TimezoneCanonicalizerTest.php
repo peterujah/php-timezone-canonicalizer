@@ -1,15 +1,15 @@
 <?php
 declare(strict_types=1);
 
-namespace Luminova\Time\Tests;
+namespace Peterujah\Timezone\Tests;
 
 use DateTimeZone;
 use Exception;
 use InvalidArgumentException;
-use Peterujah\TimezoneCanonicalizer;
 use PHPUnit\Framework\TestCase;
+use Peterujah\Timezone\Canonicalizer;
 
-final class TimezoneCanonicalizerTest extends TestCase
+final class CanonicalizerTest extends TestCase
 {
     /**
      * The alias registry is static, so every test starts and ends from the
@@ -19,12 +19,12 @@ final class TimezoneCanonicalizerTest extends TestCase
     {
         parent::setUp();
 
-        TimezoneCanonicalizer::reset();
+        Canonicalizer::reset();
     }
 
     protected function tearDown(): void
     {
-        TimezoneCanonicalizer::reset();
+        Canonicalizer::reset();
 
         parent::tearDown();
     }
@@ -59,7 +59,7 @@ final class TimezoneCanonicalizerTest extends TestCase
         foreach ($expected as $alias => $canonical) {
             $this->assertSame(
                 $canonical,
-                TimezoneCanonicalizer::resolve($alias),
+                Canonicalizer::resolve($alias),
                 "Failed resolving alias {$alias}"
             );
         }
@@ -69,19 +69,19 @@ final class TimezoneCanonicalizerTest extends TestCase
     {
         $this->assertSame(
             'America/Los_Angeles',
-            TimezoneCanonicalizer::resolve(new DateTimeZone('US/Pacific'))
+            Canonicalizer::resolve(new DateTimeZone('US/Pacific'))
         );
 
         $this->assertSame(
             'Asia/Kolkata',
-            TimezoneCanonicalizer::resolve(new DateTimeZone('Asia/Calcutta'))
+            Canonicalizer::resolve(new DateTimeZone('Asia/Calcutta'))
         );
     }
 
     public function testDateTimeZoneInstanceOfCanonicalIdentifierReturnsNull(): void
     {
-        $this->assertNull(TimezoneCanonicalizer::resolve(new DateTimeZone('Asia/Kolkata')));
-        $this->assertNull(TimezoneCanonicalizer::resolve(new DateTimeZone('UTC')));
+        $this->assertNull(Canonicalizer::resolve(new DateTimeZone('Asia/Kolkata')));
+        $this->assertNull(Canonicalizer::resolve(new DateTimeZone('UTC')));
     }
 
 
@@ -89,7 +89,7 @@ final class TimezoneCanonicalizerTest extends TestCase
     {
         foreach (['Mars/Olympus_Mons', 'Invalid/Timezone', 'Europe/Nowhere'] as $invalid) {
             try {
-                TimezoneCanonicalizer::resolve($invalid);
+                Canonicalizer::resolve($invalid);
 
                 $this->fail("Expected InvalidArgumentException for {$invalid}");
             } catch (InvalidArgumentException $e) {
@@ -105,40 +105,40 @@ final class TimezoneCanonicalizerTest extends TestCase
 
     public function testAddRegistersANewAlias(): void
     {
-        $this->assertFalse(TimezoneCanonicalizer::isAlias('Asia/Kuala_Lumpur'));
-        $this->assertNull(TimezoneCanonicalizer::resolve('Asia/Kuala_Lumpur'));
+        $this->assertFalse(Canonicalizer::isAlias('Asia/Kuala_Lumpur'));
+        $this->assertNull(Canonicalizer::resolve('Asia/Kuala_Lumpur'));
 
-        TimezoneCanonicalizer::add('Asia/Kuala_Lumpur', 'Asia/Singapore');
+        Canonicalizer::add('Asia/Kuala_Lumpur', 'Asia/Singapore');
 
-        $this->assertTrue(TimezoneCanonicalizer::isAlias('Asia/Kuala_Lumpur'));
-        $this->assertSame('Asia/Singapore', TimezoneCanonicalizer::resolve('Asia/Kuala_Lumpur'));
-        $this->assertSame('Asia/Singapore', TimezoneCanonicalizer::aliases()['Asia/Kuala_Lumpur']);
+        $this->assertTrue(Canonicalizer::isAlias('Asia/Kuala_Lumpur'));
+        $this->assertSame('Asia/Singapore', Canonicalizer::resolve('Asia/Kuala_Lumpur'));
+        $this->assertSame('Asia/Singapore', Canonicalizer::aliases()['Asia/Kuala_Lumpur']);
     }
 
     public function testAddKeepsDefaultAliasesIntact(): void
     {
         $defaults = $this->defaultsFromDataFile();
 
-        TimezoneCanonicalizer::add('Asia/Kuala_Lumpur', 'Asia/Singapore');
+        Canonicalizer::add('Asia/Kuala_Lumpur', 'Asia/Singapore');
 
         $this->assertSame(
             $defaults + ['Asia/Kuala_Lumpur' => 'Asia/Singapore'],
-            TimezoneCanonicalizer::aliases()
+            Canonicalizer::aliases()
         );
     }
 
     public function testAddThrowsForInvalidCanonicalTimezoneAndLeavesRegistryUntouched(): void
     {
         try {
-            TimezoneCanonicalizer::add('Asia/Kuala_Lumpur', 'Mars/Olympus_Mons');
+            Canonicalizer::add('Asia/Kuala_Lumpur', 'Mars/Olympus_Mons');
 
             $this->fail('Expected InvalidArgumentException');
         } catch (InvalidArgumentException $e) {
             $this->assertSame('Invalid timezone: Mars/Olympus_Mons', $e->getMessage());
         }
 
-        $this->assertFalse(TimezoneCanonicalizer::isAlias('Asia/Kuala_Lumpur'));
-        $this->assertSame($this->defaultsFromDataFile(), TimezoneCanonicalizer::aliases());
+        $this->assertFalse(Canonicalizer::isAlias('Asia/Kuala_Lumpur'));
+        $this->assertSame($this->defaultsFromDataFile(), Canonicalizer::aliases());
     }
 
     public function testCustomAliasOverridesDefaultAlias(): void
@@ -146,30 +146,30 @@ final class TimezoneCanonicalizerTest extends TestCase
         $defaults = $this->defaultsFromDataFile();
 
         $this->assertSame('America/Los_Angeles', $defaults['US/Pacific']);
-        $this->assertSame('America/Los_Angeles', TimezoneCanonicalizer::resolve('US/Pacific'));
+        $this->assertSame('America/Los_Angeles', Canonicalizer::resolve('US/Pacific'));
 
-        TimezoneCanonicalizer::add('US/Pacific', 'America/Vancouver');
+        Canonicalizer::add('US/Pacific', 'America/Vancouver');
 
-        $this->assertSame('America/Vancouver', TimezoneCanonicalizer::resolve('US/Pacific'));
-        $this->assertSame('America/Vancouver', TimezoneCanonicalizer::aliases()['US/Pacific']);
-        $this->assertCount(count($defaults), TimezoneCanonicalizer::aliases());
+        $this->assertSame('America/Vancouver', Canonicalizer::resolve('US/Pacific'));
+        $this->assertSame('America/Vancouver', Canonicalizer::aliases()['US/Pacific']);
+        $this->assertCount(count($defaults), Canonicalizer::aliases());
 
         // Other defaults are not affected by the override.
-        $this->assertSame('America/New_York', TimezoneCanonicalizer::resolve('US/Eastern'));
+        $this->assertSame('America/New_York', Canonicalizer::resolve('US/Eastern'));
     }
 
     public function testRegisteredAliasStillRequiresAValidInputIdentifier(): void
     {
         // resolve() validates its input with DateTimeZone before the lookup, so an
         // alias PHP does not recognise is registered but cannot be resolved.
-        TimezoneCanonicalizer::add('Custom/Legacy', 'Europe/Paris');
+        Canonicalizer::add('Custom/Legacy', 'Europe/Paris');
 
-        $this->assertTrue(TimezoneCanonicalizer::isAlias('Custom/Legacy'));
+        $this->assertTrue(Canonicalizer::isAlias('Custom/Legacy'));
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid timezone: Custom/Legacy');
 
-        TimezoneCanonicalizer::resolve('Custom/Legacy');
+        Canonicalizer::resolve('Custom/Legacy');
     }
 
     // ------------------------------------------------------------------
@@ -178,48 +178,48 @@ final class TimezoneCanonicalizerTest extends TestCase
 
     public function testRemoveDeletesACustomAlias(): void
     {
-        TimezoneCanonicalizer::add('Asia/Kuala_Lumpur', 'Asia/Singapore');
+        Canonicalizer::add('Asia/Kuala_Lumpur', 'Asia/Singapore');
 
-        $this->assertTrue(TimezoneCanonicalizer::remove('Asia/Kuala_Lumpur'));
+        $this->assertTrue(Canonicalizer::remove('Asia/Kuala_Lumpur'));
 
-        $this->assertFalse(TimezoneCanonicalizer::isAlias('Asia/Kuala_Lumpur'));
-        $this->assertNull(TimezoneCanonicalizer::resolve('Asia/Kuala_Lumpur'));
-        $this->assertArrayNotHasKey('Asia/Kuala_Lumpur', TimezoneCanonicalizer::aliases());
+        $this->assertFalse(Canonicalizer::isAlias('Asia/Kuala_Lumpur'));
+        $this->assertNull(Canonicalizer::resolve('Asia/Kuala_Lumpur'));
+        $this->assertArrayNotHasKey('Asia/Kuala_Lumpur', Canonicalizer::aliases());
     }
 
     public function testRemoveDeletesADefaultAlias(): void
     {
         $defaults = $this->defaultsFromDataFile();
 
-        $this->assertTrue(TimezoneCanonicalizer::remove('Asia/Calcutta'));
+        $this->assertTrue(Canonicalizer::remove('Asia/Calcutta'));
 
-        $this->assertFalse(TimezoneCanonicalizer::isAlias('Asia/Calcutta'));
-        $this->assertNull(TimezoneCanonicalizer::resolve('Asia/Calcutta'));
-        $this->assertCount(count($defaults) - 1, TimezoneCanonicalizer::aliases());
+        $this->assertFalse(Canonicalizer::isAlias('Asia/Calcutta'));
+        $this->assertNull(Canonicalizer::resolve('Asia/Calcutta'));
+        $this->assertCount(count($defaults) - 1, Canonicalizer::aliases());
 
         // Repeated calls (which re-read the registry) must not bring it back.
-        $this->assertArrayNotHasKey('Asia/Calcutta', TimezoneCanonicalizer::aliases());
-        $this->assertFalse(TimezoneCanonicalizer::remove('Asia/Calcutta'));
+        $this->assertArrayNotHasKey('Asia/Calcutta', Canonicalizer::aliases());
+        $this->assertFalse(Canonicalizer::remove('Asia/Calcutta'));
 
         // Other defaults are untouched.
-        $this->assertSame('Asia/Ho_Chi_Minh', TimezoneCanonicalizer::resolve('Asia/Saigon'));
+        $this->assertSame('Asia/Ho_Chi_Minh', Canonicalizer::resolve('Asia/Saigon'));
     }
 
     public function testRemoveReturnsFalseForUnregisteredAlias(): void
     {
-        $this->assertFalse(TimezoneCanonicalizer::remove('Does/Not_Exist'));
-        $this->assertFalse(TimezoneCanonicalizer::remove('America/New_York'));
+        $this->assertFalse(Canonicalizer::remove('Does/Not_Exist'));
+        $this->assertFalse(Canonicalizer::remove('America/New_York'));
 
-        $this->assertSame($this->defaultsFromDataFile(), TimezoneCanonicalizer::aliases());
+        $this->assertSame($this->defaultsFromDataFile(), Canonicalizer::aliases());
     }
 
     public function testRemovedDefaultAliasCanBeAddedAgain(): void
     {
-        TimezoneCanonicalizer::remove('Asia/Calcutta');
-        TimezoneCanonicalizer::add('Asia/Calcutta', 'Asia/Kolkata');
+        Canonicalizer::remove('Asia/Calcutta');
+        Canonicalizer::add('Asia/Calcutta', 'Asia/Kolkata');
 
-        $this->assertTrue(TimezoneCanonicalizer::isAlias('Asia/Calcutta'));
-        $this->assertSame('Asia/Kolkata', TimezoneCanonicalizer::resolve('Asia/Calcutta'));
+        $this->assertTrue(Canonicalizer::isAlias('Asia/Calcutta'));
+        $this->assertSame('Asia/Kolkata', Canonicalizer::resolve('Asia/Calcutta'));
     }
 
     // ------------------------------------------------------------------
@@ -228,17 +228,17 @@ final class TimezoneCanonicalizerTest extends TestCase
 
     public function testIsAlias(): void
     {
-        $this->assertTrue(TimezoneCanonicalizer::isAlias('Asia/Calcutta'));
-        $this->assertTrue(TimezoneCanonicalizer::isAlias('US/Eastern'));
+        $this->assertTrue(Canonicalizer::isAlias('Asia/Calcutta'));
+        $this->assertTrue(Canonicalizer::isAlias('US/Eastern'));
 
-        $this->assertFalse(TimezoneCanonicalizer::isAlias('Asia/Kolkata'));
-        $this->assertFalse(TimezoneCanonicalizer::isAlias('America/New_York'));
+        $this->assertFalse(Canonicalizer::isAlias('Asia/Kolkata'));
+        $this->assertFalse(Canonicalizer::isAlias('America/New_York'));
     }
 
     public function testIsAliasDoesNotValidateItsInput(): void
     {
-        $this->assertFalse(TimezoneCanonicalizer::isAlias('Mars/Olympus_Mons'));
-        $this->assertFalse(TimezoneCanonicalizer::isAlias(''));
+        $this->assertFalse(Canonicalizer::isAlias('Mars/Olympus_Mons'));
+        $this->assertFalse(Canonicalizer::isAlias(''));
     }
 
     // ------------------------------------------------------------------
@@ -250,7 +250,7 @@ final class TimezoneCanonicalizerTest extends TestCase
         $defaults = $this->defaultsFromDataFile();
 
         $this->assertNotEmpty($defaults);
-        $this->assertSame($defaults, TimezoneCanonicalizer::aliases());
+        $this->assertSame($defaults, Canonicalizer::aliases());
     }
 
     public function testDefaultAliasDataIsWellFormed(): void
@@ -280,21 +280,21 @@ final class TimezoneCanonicalizerTest extends TestCase
 
     public function testAliasesReturnsACopyOfTheRegistry(): void
     {
-        $aliases = TimezoneCanonicalizer::aliases();
+        $aliases = Canonicalizer::aliases();
         $aliases['Asia/Calcutta'] = 'Somewhere/Else';
         unset($aliases['US/Eastern']);
 
-        $this->assertSame('Asia/Kolkata', TimezoneCanonicalizer::resolve('Asia/Calcutta'));
-        $this->assertTrue(TimezoneCanonicalizer::isAlias('US/Eastern'));
+        $this->assertSame('Asia/Kolkata', Canonicalizer::resolve('Asia/Calcutta'));
+        $this->assertTrue(Canonicalizer::isAlias('US/Eastern'));
     }
 
     public function testAliasesReflectsRuntimeChanges(): void
     {
-        TimezoneCanonicalizer::add('Asia/Kuala_Lumpur', 'Asia/Singapore');
-        TimezoneCanonicalizer::add('US/Pacific', 'America/Vancouver');
-        TimezoneCanonicalizer::remove('Asia/Calcutta');
+        Canonicalizer::add('Asia/Kuala_Lumpur', 'Asia/Singapore');
+        Canonicalizer::add('US/Pacific', 'America/Vancouver');
+        Canonicalizer::remove('Asia/Calcutta');
 
-        $aliases = TimezoneCanonicalizer::aliases();
+        $aliases = Canonicalizer::aliases();
 
         $this->assertSame('Asia/Singapore', $aliases['Asia/Kuala_Lumpur']);
         $this->assertSame('America/Vancouver', $aliases['US/Pacific']);
@@ -308,15 +308,15 @@ final class TimezoneCanonicalizerTest extends TestCase
 
     public function testResetRestoresTheDefaultAliases(): void
     {
-        TimezoneCanonicalizer::add('Asia/Kuala_Lumpur', 'Asia/Singapore');
-        TimezoneCanonicalizer::add('US/Pacific', 'America/Vancouver');
-        TimezoneCanonicalizer::remove('Asia/Calcutta');
+        Canonicalizer::add('Asia/Kuala_Lumpur', 'Asia/Singapore');
+        Canonicalizer::add('US/Pacific', 'America/Vancouver');
+        Canonicalizer::remove('Asia/Calcutta');
 
-        TimezoneCanonicalizer::reset();
+        Canonicalizer::reset();
 
-        $this->assertSame($this->defaultsFromDataFile(), TimezoneCanonicalizer::aliases());
-        $this->assertSame('America/Los_Angeles', TimezoneCanonicalizer::resolve('US/Pacific'));
-        $this->assertSame('Asia/Kolkata', TimezoneCanonicalizer::resolve('Asia/Calcutta'));
-        $this->assertFalse(TimezoneCanonicalizer::isAlias('Asia/Kuala_Lumpur'));
+        $this->assertSame($this->defaultsFromDataFile(), Canonicalizer::aliases());
+        $this->assertSame('America/Los_Angeles', Canonicalizer::resolve('US/Pacific'));
+        $this->assertSame('Asia/Kolkata', Canonicalizer::resolve('Asia/Calcutta'));
+        $this->assertFalse(Canonicalizer::isAlias('Asia/Kuala_Lumpur'));
     }
 }
