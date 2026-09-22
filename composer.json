@@ -19,12 +19,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Peterujah\\TimezoneCanonicalizer\\": "src/"
+            "Peterujah\\Timezone\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Peterujah\\TimezoneCanonicalizer\\Tests\\": "tests/"
+            "Peterujah\\Timezone\\Tests\\": "tests/"
         }
     },
     "require-dev": {
