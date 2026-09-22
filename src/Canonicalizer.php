@@ -6,7 +6,7 @@
  */
 declare(strict_types=1);
 
-namespace Peterujah;
+namespace Peterujah\Timezone;
 
 use Exception;
 use DateTimeZone;
@@ -19,7 +19,7 @@ use InvalidArgumentException;
  * can be added, overridden, or removed at runtime; changes are kept in memory
  * for the current PHP process only and can be discarded with {@see self::reset()}.
  */
-final class TimezoneCanonicalizer
+final class Canonicalizer
 {
     /**
      * Timezone snapshot version.
