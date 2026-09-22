@@ -17,9 +17,9 @@ composer require peterujah/php-timezone-canonicalizer
 ## Usage
 
 ```php
-use Peterujah\TimezoneCanonicalizer;
+use Peterujah\Timezone\Canonicalizer;
 
-$timezone = TimezoneCanonicalizer::resolve('Asia/Calcutta');
+$timezone = Canonicalizer::resolve('Asia/Calcutta');
 
 echo $timezone, PHP_EOL;
 // Asia/Kolkata
@@ -30,14 +30,14 @@ echo $timezone, PHP_EOL;
 ```php
 $timezone = new DateTimeZone('US/Pacific');
 
-echo TimezoneCanonicalizer::resolve($timezone), PHP_EOL;
+echo Canonicalizer::resolve($timezone), PHP_EOL;
 // America/Los_Angeles
 ```
 
 If the identifier is valid but is not registered as an alias, `resolve()` returns the identifier unchanged.
 
 ```php
-echo TimezoneCanonicalizer::resolve('Asia/Kolkata'), PHP_EOL;
+echo Canonicalizer::resolve('Asia/Kolkata'), PHP_EOL;
 // Asia/Kolkata
 ```
 
@@ -50,12 +50,12 @@ The default aliases are loaded from the bundled `src/data/aliases.php` file.
 ### Add or override an alias
 
 ```php
-TimezoneCanonicalizer::add(
+Canonicalizer::add(
     'Asia/Kuala_Lumpur',
     'Asia/Singapore'
 );
 
-echo TimezoneCanonicalizer::resolve('Asia/Kuala_Lumpur');
+echo Canonicalizer::resolve('Asia/Kuala_Lumpur');
 // Asia/Singapore
 ```
 
@@ -64,12 +64,12 @@ echo TimezoneCanonicalizer::resolve('Asia/Kuala_Lumpur');
 An existing alias can also be overridden:
 
 ```php
-TimezoneCanonicalizer::add(
+Canonicalizer::add(
     'US/Pacific',
     'America/Vancouver'
 );
 
-echo TimezoneCanonicalizer::resolve('US/Pacific');
+echo Canonicalizer::resolve('US/Pacific');
 // America/Vancouver
 ```
 
@@ -78,7 +78,7 @@ The alias itself is not validated by `add()`. However, `resolve()` validates its
 ### Remove an alias
 
 ```php
-TimezoneCanonicalizer::remove('Asia/Calcutta');
+Canonicalizer::remove('Asia/Calcutta');
 // true
 ```
 
@@ -89,10 +89,10 @@ Removing a default alias only affects the current PHP process.
 ### Check an alias
 
 ```php
-TimezoneCanonicalizer::isAlias('Asia/Calcutta');
+Canonicalizer::isAlias('Asia/Calcutta');
 // true
 
-TimezoneCanonicalizer::isAlias('Asia/Kolkata');
+Canonicalizer::isAlias('Asia/Kolkata');
 // false
 ```
 
@@ -101,7 +101,7 @@ TimezoneCanonicalizer::isAlias('Asia/Kolkata');
 ### Get registered aliases
 
 ```php
-$aliases = TimezoneCanonicalizer::aliases();
+$aliases = Canonicalizer::aliases();
 
 echo $aliases['Asia/Calcutta'];
 // Asia/Kolkata
@@ -114,15 +114,15 @@ The returned array contains the current alias registry, including runtime change
 Runtime additions, overrides, and removals can be discarded with `reset()`:
 
 ```php
-TimezoneCanonicalizer::remove('Asia/Calcutta');
-TimezoneCanonicalizer::add('US/Pacific', 'America/Vancouver');
+Canonicalizer::remove('Asia/Calcutta');
+Canonicalizer::add('US/Pacific', 'America/Vancouver');
 
-TimezoneCanonicalizer::reset();
+Canonicalizer::reset();
 
-echo TimezoneCanonicalizer::resolve('Asia/Calcutta');
+echo Canonicalizer::resolve('Asia/Calcutta');
 // Asia/Kolkata
 
-echo TimezoneCanonicalizer::resolve('US/Pacific');
+echo Canonicalizer::resolve('US/Pacific');
 // America/Los_Angeles
 ```
 
@@ -150,7 +150,7 @@ The package validates timezone identifiers using the timezone database available
 The bundled data version is available through:
 
 ```php
-TimezoneCanonicalizer::VERSION;
+Canonicalizer::VERSION;
 // 2022.7
 ```
 
