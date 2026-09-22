@@ -52,21 +52,15 @@ final class Canonicalizer
     /**
      * Resolve a timezone alias to its canonical IANA identifier.
      *
-     * @param DateTimeZone|string $timezone The timezone identifier or object.
+     * @param DateTimeZone|string $alias The timezone alias or object.
      *
      * @return string The canonical timezone identifier, or the timezone is not an alias.
-     *
-     * @throws InvalidArgumentException If the timezone is invalid.
      */
-    public static function resolve(DateTimeZone|string $timezone): string
+    public static function resolve(DateTimeZone|string $alias): string
     {
-        $timezone = ($timezone instanceof DateTimeZone)
-            ? $timezone->getName()
-            : $timezone;
+        $alias = self::name($alias);
 
-        self::assert($timezone);
-
-        return self::aliases()[$timezone] ?? $timezone;
+        return self::aliases()[$alias] ?? $alias;
     }
 
     /**
@@ -169,7 +163,7 @@ final class Canonicalizer
     public static function load(string $file): int
     {
         $lines = false;
-        
+
         if(str_ends_with($file, '.php')){
             $aliases = require $file;
 
@@ -222,13 +216,27 @@ final class Canonicalizer
      * This is a plain registry lookup: the identifier is not validated, so
      * unknown identifiers simply return false.
      *
-     * @param string $timezone The timezone identifier.
+     * @param DateTimeZone|string $timezone The timezone identifier.
      *
      * @return bool Whether the timezone is registered as an alias.
      */
-    public static function isAlias(string $timezone): bool
+    public static function isAlias(DateTimeZone|string $timezone): bool
     {
-        return isset(self::aliases()[$timezone]);
+        return isset(self::aliases()[self::name($timezone)]);
+    }
+
+    /**
+     * Resolve timezone name.
+     *
+     * @param DateTimeZone|string $alias
+     * 
+     * @return string
+     */
+    private static function name(DateTimeZone|string $alias): string
+    {
+        return ($alias instanceof DateTimeZone)
+            ? $alias->getName()
+            : $alias;
     }
 
     /**
